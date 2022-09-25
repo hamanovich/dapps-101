@@ -8,7 +8,7 @@
     "compile": "npx hardhat compile",
     "connect": "npx hardhat node",
     "deploy:default": "npx hardhat run",
-    "deploy:localhost": "yarn deploy:default scripts/deploy.ts --network localhost"
+    "deploy:localhost": "yarn deploy:default --network localhost"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
