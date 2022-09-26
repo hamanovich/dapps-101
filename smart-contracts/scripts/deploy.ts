@@ -7,8 +7,12 @@ async function main() {
   const AdvancedStorage = await ethers.getContractFactory("AdvancedStorage");
   const advancedStorage = await AdvancedStorage.deploy();
 
+  const CRUD = await ethers.getContractFactory("CRUD");
+  const crud = await CRUD.deploy();
+
   console.log(`SimpleStorage deployed to ${simpleStorage.address}`);
   console.log(`AdvancedStorage deployed to ${advancedStorage.address}`);
+  console.log(`CRUD deployed to ${crud.address}`);
 }
 
 main().catch((error) => {

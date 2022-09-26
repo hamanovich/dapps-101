@@ -2,14 +2,12 @@ import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
 import type { NextPage } from "next";
 import { ethers } from "ethers";
 import { useMetaMask } from "metamask-react";
-
 import ABI from "../../public/contracts/SimpleStorage.sol/SimpleStorage.json";
-import Loader from "../../components/Loader";
 
-const DEPLOY_ADDRESS = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707";
+const DEPLOY_ADDRESS = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
 
 const SimpleStorage: NextPage = () => {
-  const { status, chainId, connect, account, switchChain } = useMetaMask();
+  const { status, account } = useMetaMask();
 
   const [input, setInput] = useState<undefined | string>("");
   const [contractData, setContractData] = useState("");
@@ -52,51 +50,16 @@ const SimpleStorage: NextPage = () => {
     }
   };
 
-  if (status === "initializing" || status === "connecting") {
-    return <Loader />;
-  }
-
-  if (status === "unavailable") {
-    return (
-      <div
-        className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800"
-        role="alert"
-      >
-        <span className="font-medium">MetaMask not available :(</span>
-      </div>
-    );
-  }
-
-  if (status === "notConnected") {
-    return (
-      <button
-        type="button"
-        onClick={connect}
-        className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
-      >
-        Connect to MetaMask
-      </button>
-    );
-  }
-
-  if (chainId !== process.env.NEXT_PUBLIC_CHAIN_ID) {
-    return (
-      <button
-        type="button"
-        onClick={() => switchChain(process.env.NEXT_PUBLIC_CHAIN_ID as string)}
-        className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
-      >
-        Switch to Localhost network
-      </button>
-    );
-  }
-
   return (
     <>
       <h1 className="text-3xl font-bold mb-4">Simple Storage</h1>
 
-      <p className="mb-3 text-lg font-light text-gray-500 md:text-xl dark:text-gray-400">
+      <p className="mb-1 text-lg font-light text-gray-500 md:text-xl dark:text-gray-400">
         Account: {account}
+      </p>
+
+      <p className="mb-3 text-lg font-light text-gray-500 md:text-xl dark:text-gray-400">
+        Contract address: {DEPLOY_ADDRESS}
       </p>
 
       <form onSubmit={handleSubmit} className="mb-10">
@@ -119,10 +82,9 @@ const SimpleStorage: NextPage = () => {
 
         <button
           type="submit"
-          onClick={handleSubmit}
           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center"
         >
-          Submit
+          Set
         </button>
       </form>
 
