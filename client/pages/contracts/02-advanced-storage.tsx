@@ -4,8 +4,6 @@ import { ethers } from "ethers";
 import { useMetaMask } from "metamask-react";
 import ABI from "../../public/contracts/AdvancedStorage.sol/AdvancedStorage.json";
 
-const DEPLOY_ADDRESS = "0x9A676e781A523b5d0C0e43731313A708CB607508";
-
 const AdvancedStorage: NextPage = () => {
   const { status, account } = useMetaMask();
 
@@ -18,7 +16,7 @@ const AdvancedStorage: NextPage = () => {
   useEffect(() => {
     const getAndSetContractData = async () => {
       const AdvancedStorageContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_02_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -45,7 +43,7 @@ const AdvancedStorage: NextPage = () => {
 
     try {
       const AdvancedStorageContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_02_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -75,7 +73,7 @@ const AdvancedStorage: NextPage = () => {
 
     try {
       const AdvancedStorageContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_02_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -97,7 +95,7 @@ const AdvancedStorage: NextPage = () => {
       </p>
 
       <p className="mb-3 text-lg font-light text-gray-500 md:text-xl dark:text-gray-400">
-        Contract address: {DEPLOY_ADDRESS}
+        Contract address: {process.env.NEXT_PUBLIC_02_CONTRACT}
       </p>
 
       <form onSubmit={handleSubmit} className="mb-6">

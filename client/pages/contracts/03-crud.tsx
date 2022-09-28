@@ -5,8 +5,6 @@ import { useMetaMask } from "metamask-react";
 
 import ABI from "../../public/contracts/CRUD.sol/CRUD.json";
 
-const DEPLOY_ADDRESS = "0x0B306BF915C4d645ff596e518fAf3F9669b97016";
-
 const CRUD: NextPage = () => {
   const { account } = useMetaMask();
 
@@ -43,7 +41,7 @@ const CRUD: NextPage = () => {
 
     try {
       const CRUDContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_03_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -60,7 +58,7 @@ const CRUD: NextPage = () => {
 
     try {
       const CRUDContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_03_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -77,7 +75,7 @@ const CRUD: NextPage = () => {
 
     try {
       const CRUDContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_03_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -97,7 +95,7 @@ const CRUD: NextPage = () => {
 
     try {
       const CRUDContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_03_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -124,7 +122,7 @@ const CRUD: NextPage = () => {
       </p>
 
       <p className="mb-3 text-lg font-light text-gray-500 md:text-xl dark:text-gray-400">
-        Contract address: {DEPLOY_ADDRESS}
+        Contract address: {process.env.NEXT_PUBLIC_03_CONTRACT}
       </p>
 
       {(user?.id || error) && (
@@ -147,7 +145,7 @@ const CRUD: NextPage = () => {
         </div>
       )}
 
-      <h1 className="text-xl font-bold mb-4">Create</h1>
+      <h2 className="text-xl font-bold mb-4">Create</h2>
 
       <form onSubmit={handleCreateSubmit} className="mb-10">
         <div className="mb-3">
@@ -175,7 +173,7 @@ const CRUD: NextPage = () => {
         </button>
       </form>
 
-      <h1 className="text-xl font-bold mb-4">Read</h1>
+      <h2 className="text-xl font-bold mb-4">Read</h2>
 
       <form onSubmit={handleReadSubmit} className="mb-10">
         <div className="mb-3">
@@ -203,7 +201,7 @@ const CRUD: NextPage = () => {
         </button>
       </form>
 
-      <h1 className="text-xl font-bold mb-4">Destroy</h1>
+      <h2 className="text-xl font-bold mb-4">Destroy</h2>
 
       <form onSubmit={handleDestroySubmit} className="mb-10">
         <div className="mb-3">
@@ -231,7 +229,7 @@ const CRUD: NextPage = () => {
         </button>
       </form>
 
-      <h1 className="text-xl font-bold mb-4">Update</h1>
+      <h2 className="text-xl font-bold mb-4">Update</h2>
 
       <form onSubmit={handleUpdateSubmit} className="mb-10">
         <div className="mb-3">

@@ -4,8 +4,6 @@ import { ethers } from "ethers";
 import { useMetaMask } from "metamask-react";
 import ABI from "../../public/contracts/SimpleStorage.sol/SimpleStorage.json";
 
-const DEPLOY_ADDRESS = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
-
 const SimpleStorage: NextPage = () => {
   const { status, account } = useMetaMask();
 
@@ -15,7 +13,7 @@ const SimpleStorage: NextPage = () => {
   useEffect(() => {
     const getAndSetContractData = async () => {
       const SimpleStorageContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_01_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -35,7 +33,7 @@ const SimpleStorage: NextPage = () => {
 
     try {
       const SimpleStorageContract = new ethers.Contract(
-        DEPLOY_ADDRESS,
+        process.env.NEXT_PUBLIC_01_CONTRACT as string,
         ABI.abi,
         new ethers.providers.Web3Provider(window.ethereum).getSigner()
       );
@@ -59,7 +57,7 @@ const SimpleStorage: NextPage = () => {
       </p>
 
       <p className="mb-3 text-lg font-light text-gray-500 md:text-xl dark:text-gray-400">
-        Contract address: {DEPLOY_ADDRESS}
+        Contract address: {process.env.NEXT_PUBLIC_01_CONTRACT}
       </p>
 
       <form onSubmit={handleSubmit} className="mb-10">
