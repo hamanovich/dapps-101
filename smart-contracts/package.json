@@ -5,10 +5,13 @@
   "license": "MIT",
   "scripts": {
     "test": "npx hardhat test",
+    "coverage": "npx hardhat coverage",
+    "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
     "connect": "npx hardhat node",
     "deploy:default": "npx hardhat run",
-    "deploy:localhost": "yarn deploy:default --network localhost"
+    "deploy:localhost": "yarn deploy:default --network localhost",
+    "re": "yarn clean && yarn compile && yarn deploy:localhost scripts/deploy.ts"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
@@ -27,7 +30,7 @@
     "ethers": "^5.4.7",
     "hardhat": "^2.11.2",
     "hardhat-gas-reporter": "^1.0.8",
-    "solidity-coverage": "^0.8.0",
+    "solidity-coverage": "^0.8.2",
     "ts-node": ">=8.0.0",
     "typechain": "^8.1.0",
     "typescript": ">=4.5.0"
