@@ -22,11 +22,17 @@ async function main() {
     10000
   );
 
+  const RockPaperScissors = await ethers.getContractFactory(
+    "RockPaperScissors"
+  );
+  const rockPaperScissors = await RockPaperScissors.deploy();
+
   console.log(`SimpleStorage deployed to ${simpleStorage.address}`);
   console.log(`AdvancedStorage deployed to ${advancedStorage.address}`);
   console.log(`CRUD deployed to ${crud.address}`);
   console.log(`EtherWallet deployed to ${etherWallet.address}`);
   console.log(`Escrow deployed to ${escrow.address}`);
+  console.log(`RockPaperScissors deployed to ${rockPaperScissors.address}`);
 }
 
 main().catch((error) => {

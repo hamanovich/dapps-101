@@ -90,6 +90,46 @@ const Home: NextPage = () => {
             </span>
           </Link>
         </li>
+
+        <li className="flex items-center text-2xl">
+          <svg
+            className="w-4 h-4 mr-1.5 text-green-500 dark:text-green-400 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            ></path>
+          </svg>
+          <Link href="/contracts/in_progress_05-escrow">
+            <span className="decoration-indigo-500 underline cursor-pointer hover:no-underline">
+              Escrow (in progress)
+            </span>
+          </Link>
+        </li>
+
+        <li className="flex items-center text-2xl">
+          <svg
+            className="w-4 h-4 mr-1.5 text-green-500 dark:text-green-400 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            ></path>
+          </svg>
+          <Link href="/contracts/06-rock-paper-scissors">
+            <span className="decoration-indigo-500 underline cursor-pointer hover:no-underline">
+              Rock, Paper &amp; Scissors
+            </span>
+          </Link>
+        </li>
       </ul>
     </>
   );
