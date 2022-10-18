@@ -11,6 +11,7 @@
     "connect": "npx hardhat node",
     "deploy:default": "npx hardhat run",
     "deploy:localhost": "yarn deploy:default --network localhost",
+    "deploy:goerli": "yarn deploy:default --network goerli",
     "re": "yarn clean && yarn compile && yarn deploy:localhost scripts/deploy.ts"
   },
   "devDependencies": {
@@ -27,6 +28,7 @@
     "@types/mocha": "^9.1.0",
     "@types/node": ">=12.0.0",
     "chai": "^4.2.0",
+    "dotenv": "^16.0.3",
     "ethers": "^5.4.7",
     "hardhat": "^2.11.2",
     "hardhat-gas-reporter": "^1.0.8",

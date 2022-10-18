@@ -33,14 +33,17 @@ const Web3Errors: NextPage<PropsWithChildren> = ({ children }) => {
     );
   }
 
-  if (chainId !== process.env.NEXT_PUBLIC_CHAIN_ID) {
+  if (
+    chainId !== process.env.NEXT_PUBLIC_CHAIN_ID &&
+    chainId !== process.env.NEXT_PUBLIC_GOERLI_CHAIN_ID
+  ) {
     return (
       <button
         type="button"
         onClick={() => switchChain(process.env.NEXT_PUBLIC_CHAIN_ID as string)}
         className="focus:outline-none text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 dark:bg-purple-600 dark:hover:bg-purple-700 dark:focus:ring-purple-900"
       >
-        Switch to Localhost network
+        Switch to valid network
       </button>
     );
   }

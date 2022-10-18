@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.17;
 
-pragma solidity >=0.8.9 <0.9.0;
+// Deployed at 0xFfe06BC9d6980c424533800ACF3eEF3BF8b8fd1b
 
 contract RockPaperScissors {
     enum State {
@@ -102,7 +103,7 @@ contract RockPaperScissors {
         );
 
         moves[_gameId][msg.sender] = Move(
-            keccak256(abi.encodePacked(moveId, salt)),
+            keccak256(abi.encodePacked(moveId, salt, msg.sender)),
             0
         );
 
@@ -130,7 +131,8 @@ contract RockPaperScissors {
             "can only be called by one of players"
         );
         require(
-            moveSender.hash == keccak256(abi.encodePacked(moveId, salt)),
+            moveSender.hash ==
+                keccak256(abi.encodePacked(moveId, salt, msg.sender)),
             "moveId does not match commitment"
         );
 
