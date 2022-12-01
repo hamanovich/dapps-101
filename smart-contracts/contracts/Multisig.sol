@@ -2,9 +2,16 @@
 
 pragma solidity 0.8.17;
 
-contract Multisig {
-    address[] public approvers;
-    uint256 public immutable quorum;
+error MultiSig__TransferAlreadySent();
+error MultiSig__NotSent();
+error MultiSig__OnlyApprover();
+error MultiSig__BalanceExceeded();
+
+contract MultiSig {
+    address[] private approvers;
+    uint256 private immutable quorum;
+    uint256 private nextId;
+
     struct Transfer {
         uint256 id;
         uint256 amount;
@@ -12,9 +19,9 @@ contract Multisig {
         uint256 approvals;
         bool sent;
     }
-    mapping(uint256 => Transfer) public transfers;
-    uint256 public nextId;
-    mapping(address => mapping(uint256 => bool)) public approvals;
+
+    mapping(uint256 => Transfer) private transfers;
+    mapping(address => mapping(uint256 => bool)) approvals;
 
     constructor(address[] memory _approvers, uint256 _quorum) payable {
         approvers = _approvers;
@@ -25,33 +32,52 @@ contract Multisig {
         external
         onlyApprover
     {
+        if (amount > getBalance()) revert MultiSig__BalanceExceeded();
         transfers[nextId] = Transfer(nextId, amount, to, 0, false);
         nextId++;
     }
 
-    function sendTransfer(uint256 id) external onlyApprover {
-        require(transfers[id].sent == false, "transfer has already been sent");
-        if (approvals[msg.sender][id] == false) {
-            approvals[msg.sender][id] = true;
-            transfers[id].approvals++;
-        }
+    function sendTransfer(uint256 id) external payable onlyApprover {
+        if (transfers[id].sent) revert MultiSig__TransferAlreadySent();
 
         if (transfers[id].approvals >= quorum) {
             transfers[id].sent = true;
-            address payable to = transfers[id].to;
-            uint256 amount = transfers[id].amount;
-            to.transfer(amount);
+            (bool sent, ) = transfers[id].to.call{value: transfers[id].amount}(
+                ""
+            );
+            if (!sent) revert MultiSig__NotSent();
+
+            return;
         }
+
+        if (!approvals[msg.sender][id]) {
+            approvals[msg.sender][id] = true;
+            transfers[id].approvals++;
+        }
+    }
+
+    function getBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function getTransfer(uint256 _id) external view returns (Transfer memory) {
+        return transfers[_id];
+    }
+
+    function getApprovers() external view returns (address[] memory) {
+        return approvers;
+    }
+
+    function getQuorom() external view returns (uint256) {
+        return quorum;
     }
 
     modifier onlyApprover() {
         bool allowed = false;
         for (uint256 i; i < approvers.length; i++) {
-            if (approvers[i] == msg.sender) {
-                allowed = true;
-            }
+            if (approvers[i] == msg.sender) allowed = true;
         }
-        require(allowed == true, "only approver allowed");
+        if (!allowed) revert MultiSig__OnlyApprover();
         _;
     }
 }
