@@ -2,8 +2,15 @@
 
 pragma solidity 0.8.17;
 
+error Voting__OnlyAdmin();
+error Voting__OnlyVoters();
+error Voting__VoteOnce();
+error Voting__VoteUntil();
+error Voting__ResultBefore();
+
 contract Voting {
-    mapping(address => bool) public voters;
+    mapping(address => bool) private voters;
+    mapping(address => mapping(uint256 => bool)) private votes;
 
     struct Choice {
         uint256 id;
@@ -20,13 +27,17 @@ contract Voting {
 
     mapping(uint256 => Ballot) ballots;
     uint256 nextBallotId = 1;
+    address private immutable admin;
 
-    address public admin;
-
-    mapping(address => mapping(uint256 => bool)) public votes;
+    event BallotCreated(
+        uint256 indexed id,
+        string name,
+        Choice[] choices,
+        uint256 end
+    );
 
     modifier onlyAdmin() {
-        require(msg.sender == admin, "Only admin");
+        if (msg.sender != admin) revert Voting__OnlyAdmin();
         _;
     }
 
@@ -44,7 +55,7 @@ contract Voting {
         string memory name,
         string[] memory choices,
         uint256 offset
-    ) public onlyAdmin {
+    ) external onlyAdmin {
         ballots[nextBallotId].id = nextBallotId;
         ballots[nextBallotId].name = name;
         ballots[nextBallotId].end = block.timestamp + offset;
@@ -52,27 +63,35 @@ contract Voting {
         for (uint256 i; i < choices.length; i++) {
             ballots[nextBallotId].choices.push(Choice(i, choices[i], 0));
         }
+
+        emit BallotCreated(
+            nextBallotId,
+            name,
+            ballots[nextBallotId].choices,
+            block.timestamp + offset
+        );
     }
 
     function vote(uint256 ballotId, uint256 choiceId) external {
-        require(voters[msg.sender] == true, "only voters can vote");
-        require(
-            votes[msg.sender][ballotId] == false,
-            "voter can only vote once for a ballot"
-        );
-        require(
-            ballots[ballotId].end > block.timestamp,
-            "can only vote until ballot is end"
-        );
+        if (!voters[msg.sender]) revert Voting__OnlyVoters();
+        if (votes[msg.sender][ballotId]) revert Voting__VoteOnce();
+        if (ballots[ballotId].end <= block.timestamp)
+            revert Voting__VoteUntil();
         votes[msg.sender][ballotId] = true;
         ballots[ballotId].choices[choiceId].votes++;
     }
 
     function results(uint256 ballotId) external view returns (Choice[] memory) {
-        require(
-            block.timestamp >= ballots[ballotId].end,
-            "cannot see the ballot result before ballot end"
-        );
+        if (block.timestamp < ballots[ballotId].end)
+            revert Voting__ResultBefore();
         return ballots[ballotId].choices;
+    }
+
+    function getVoter(address _voter) external view returns (bool) {
+        return voters[_voter];
+    }
+
+    function getBallot(uint256 _id) external view returns (Ballot memory) {
+        return ballots[_id];
     }
 }

@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: MIT
 
-// Задача:
-// - контракт должен создавать объект голосования, принимая на вход массив адресов кандидатов.
-// - голосований может быть много, по всем нужно иметь возможность посмотреть информацию.
-// - голосование длится некоторое время.
-// - пользователи могут голосовать за кандидата, переводя на контракт эфир.
-// - по завершении голосования победитель может снять средства, которые были внесены в это голосование, за исключением комиссии площадки.
-// - владелец площадки должен иметь возможность выводить комиссию.
-
 pragma solidity 0.8.17;
 
-contract VotingContract {
-    address public owner;
-    uint256 public counter;
-    uint256 public maxCandidatesNum;
+error Voting__OnlyOwner();
+error Voting__WithdrawComissionFailed();
+error Voting__Started();
+error Voting__NotStarted();
+error Voting__Ended();
+error Voting__NotOver();
+error Voting__NotWinner();
+error Voting__AlreadyWithdrawn();
+error Voting__NoCandidate();
+
+contract VotingAdvanced {
+    address private immutable owner;
+    uint128 private counter;
+    uint8 private immutable comission;
 
     struct Candidate {
         uint256 balance;
@@ -22,76 +24,78 @@ contract VotingContract {
 
     struct Voting {
         bool started;
-        address Winner;
-        uint256 StartDate;
-        uint256 WinnerBalance;
-        uint256 Bank;
-        uint256 Period;
-        mapping(address => Candidate) Candidates;
+        address winner;
+        uint256 startDate;
+        uint256 winnerBalance;
+        uint256 bank;
+        uint256 period;
+        mapping(address => Candidate) candidates;
     }
 
-    mapping(uint256 => Voting) private Votings;
+    mapping(uint256 => Voting) private votings;
 
-    uint8 public immutable Comission;
+    event candidateInfo(
+        uint256 indexed votingID,
+        address indexed candidate,
+        bool exists
+    );
 
-    constructor(uint256 _maxCandidatesNum, uint8 _comission) {
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert Voting__OnlyOwner();
+        _;
+    }
+
+    constructor(uint8 _comission) {
         owner = msg.sender;
-        Comission = _comission;
-        maxCandidatesNum = _maxCandidatesNum;
+        comission = _comission;
     }
 
-    function takePartInVoting(uint8 _votingID, address _candidate)
-        public
-        payable
-    {
-        require(Votings[_votingID].started, "Voting not started yet");
-        require(
-            Votings[_votingID].StartDate + Votings[_votingID].Period >
-                block.timestamp,
-            "Voting is ended"
-        );
-        require(
-            checkCandidate(_votingID, _candidate),
-            "Candidate does not exist on this voting"
-        );
-        Votings[_votingID].Candidates[_candidate].balance += msg.value;
-        Votings[_votingID].Bank += msg.value;
+    function vote(uint8 _votingID, address _candidate) external payable {
+        if (!votings[_votingID].started) revert Voting__NotStarted();
         if (
-            Votings[_votingID].Candidates[_candidate].balance >
-            Votings[_votingID].WinnerBalance
+            votings[_votingID].startDate + votings[_votingID].period <=
+            block.timestamp
+        ) revert Voting__Ended();
+        if (!checkCandidate(_votingID, _candidate))
+            revert Voting__NoCandidate();
+
+        votings[_votingID].candidates[_candidate].balance += msg.value;
+        votings[_votingID].bank += msg.value;
+
+        if (
+            votings[_votingID].candidates[_candidate].balance >
+            votings[_votingID].winnerBalance
         ) {
-            Votings[_votingID].WinnerBalance = Votings[_votingID]
-                .Candidates[_candidate]
+            votings[_votingID].winnerBalance = votings[_votingID]
+                .candidates[_candidate]
                 .balance;
-            Votings[_votingID].Winner = _candidate;
+            votings[_votingID].winner = _candidate;
         }
     }
 
-    function WithdrowMyPrize(uint256 _votingID) public {
-        require(Votings[_votingID].started, "Voting not started yet");
-        require(
-            Votings[_votingID].StartDate + Votings[_votingID].Period <
-                block.timestamp,
-            "Voting is not over yet!"
-        );
-        require(
-            msg.sender == Votings[_votingID].Winner,
-            "You are not a winner!"
-        );
-        require(
-            Votings[_votingID].Bank > 0,
-            "You have already received your prize!"
-        );
-        uint256 amount = Votings[_votingID].Bank;
-        uint256 ownersComission = (Comission * amount) / 100;
+    function withdraw(uint256 _votingID) external {
+        if (!votings[_votingID].started) revert Voting__NotStarted();
+        if (
+            votings[_votingID].startDate + votings[_votingID].period >=
+            block.timestamp
+        ) revert Voting__NotOver();
+        if (msg.sender != votings[_votingID].winner) revert Voting__NotWinner();
+        if (votings[_votingID].bank == 0) revert Voting__AlreadyWithdrawn();
+
+        uint256 amount = votings[_votingID].bank;
+        uint256 ownersComission = (comission * amount) / 100;
         uint256 clearAmount = amount - ownersComission;
-        Votings[_votingID].Bank = 0;
-        payable(owner).transfer(ownersComission);
-        payable(msg.sender).transfer(clearAmount);
+        votings[_votingID].bank = 0;
+
+        (bool send, ) = payable(owner).call{value: ownersComission}("");
+        if (!send) revert Voting__WithdrawComissionFailed();
+
+        (bool cleared, ) = payable(msg.sender).call{value: clearAmount}("");
+        if (!cleared) revert Voting__WithdrawComissionFailed();
     }
 
     function getVotingInfo(uint256 _votingID)
-        public
+        external
         view
         returns (
             bool,
@@ -103,12 +107,12 @@ contract VotingContract {
         )
     {
         return (
-            Votings[_votingID].started,
-            Votings[_votingID].StartDate,
-            Votings[_votingID].Period,
-            Votings[_votingID].WinnerBalance,
-            Votings[_votingID].Bank,
-            Votings[_votingID].Winner
+            votings[_votingID].started,
+            votings[_votingID].startDate,
+            votings[_votingID].period,
+            votings[_votingID].winnerBalance,
+            votings[_votingID].bank,
+            votings[_votingID].winner
         );
     }
 
@@ -117,80 +121,50 @@ contract VotingContract {
         view
         returns (bool)
     {
-        return (Votings[_votingID].Candidates[_candidate].isExistOnThisVoting);
+        return (votings[_votingID].candidates[_candidate].isExistOnThisVoting);
     }
 
     function addVoting(uint256 _period, address[] calldata _candidates)
-        public
+        external
         onlyOwner
     {
-        require(_candidates.length < maxCandidatesNum, "Too many candidates!");
-        Votings[counter].Period = _period;
+        votings[counter].period = _period;
+
         for (uint256 i = 0; i < _candidates.length; i++) {
             addCandidate(counter, _candidates[i]);
         }
-        emit votingDraftCreated(counter);
+
         counter++;
     }
 
-    function startVoting(uint256 _votingID) public onlyOwner {
-        Votings[_votingID].started = true;
-        Votings[_votingID].StartDate = block.timestamp;
-        emit votingStarted(_votingID, block.timestamp);
+    function startVoting(uint256 _votingID) external onlyOwner {
+        votings[_votingID].started = true;
+        votings[_votingID].startDate = block.timestamp;
     }
 
     function editVotingPeriod(uint256 _votingID, uint256 _newPeriod)
-        public
+        external
         onlyOwner
     {
-        require(
-            Votings[_votingID].started == false,
-            "Voting has already begun!"
-        );
-        Votings[_votingID].Period = _newPeriod;
+        if (votings[_votingID].started) revert Voting__Started();
+        votings[_votingID].period = _newPeriod;
     }
 
     function addCandidate(uint256 _votingID, address _candidate)
         public
         onlyOwner
     {
-        require(
-            Votings[_votingID].started == false,
-            "Voting has already begun!"
-        );
-        Votings[_votingID].Candidates[_candidate].isExistOnThisVoting = true;
+        if (votings[_votingID].started) revert Voting__Started();
+        votings[_votingID].candidates[_candidate].isExistOnThisVoting = true;
         emit candidateInfo(_votingID, _candidate, true);
     }
 
     function deleteCandidate(uint256 _votingID, address _candidate)
-        public
+        external
         onlyOwner
     {
-        require(
-            Votings[_votingID].started == false,
-            "Voting has already begun!"
-        );
-        Votings[_votingID].Candidates[_candidate].isExistOnThisVoting = false;
+        if (votings[_votingID].started) revert Voting__Started();
+        votings[_votingID].candidates[_candidate].isExistOnThisVoting = false;
         emit candidateInfo(_votingID, _candidate, false);
     }
-
-    function setMaxCandidatesNum(uint256 _maxCandidatesNum) public onlyOwner {
-        maxCandidatesNum = _maxCandidatesNum;
-    }
-
-    modifier onlyOwner() {
-        require(
-            msg.sender == owner,
-            "Error! You're not the smart contract owner!"
-        );
-        _;
-    }
-
-    event candidateInfo(
-        uint256 indexed votingID,
-        address indexed candidate,
-        bool existOnThisVoting
-    );
-    event votingDraftCreated(uint256 indexed votingID);
-    event votingStarted(uint256 indexed votingID, uint256 startDate);
 }

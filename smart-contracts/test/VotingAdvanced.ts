@@ -1,0 +1,161 @@
+import { expect } from "chai";
+import { ethers } from "hardhat";
+let accounts;
+let myVotingAdvanced;
+let VotingAdvanced;
+const provider = ethers.provider;
+
+describe("VotingAdvanced", function () {
+  it("Contract should be successfully deployed, account0 is owner", async function () {
+    accounts = await ethers.getSigners();
+    VotingAdvanced = await ethers.getContractFactory("VotingAdvanced");
+    myVotingAdvanced = await VotingAdvanced.deploy(50);
+    await myVotingAdvanced.deployed();
+    expect(await myVotingAdvanced.owner()).to.equal(accounts[0].address);
+  });
+  it("Owner created a vote, the counter is increased", async function () {
+    const counter_before = await myVotingAdvanced.counter();
+    let candidates = new Array();
+    for (i = 1; i < 10; i++) candidates.push(accounts[i].address);
+    await myVotingAdvanced.connect(accounts[0]).addVoting(180, candidates);
+    const counter_after = await myVotingAdvanced.counter();
+    expect(counter_after - counter_before).to.equal(1);
+    const is_candidate5 = await myVotingAdvanced.checkCandidate(
+      counter_before,
+      accounts[5].address
+    );
+    expect(is_candidate5).to.equal(true);
+  });
+  it("Owner created another voting", async function () {
+    const counter_before = await myVotingAdvanced.counter();
+    let candidates = new Array();
+    for (i = 1; i < 4; i++) candidates.push(accounts[i].address);
+    await myVotingAdvanced.connect(accounts[0]).addVoting(180, candidates);
+    const is_candidate5 = await myVotingAdvanced.checkCandidate(
+      counter_before,
+      accounts[5].address
+    );
+    expect(is_candidate5).to.equal(false);
+  });
+  it("Candidate3 deleted", async function () {
+    await myVotingAdvanced
+      .connect(accounts[0])
+      .deleteCandidate(0, accounts[3].address);
+    const is_candidate3 = await myVotingAdvanced.checkCandidate(
+      0,
+      accounts[3].address
+    );
+    expect(is_candidate3).to.equal(false);
+  });
+  it("Candidate3 added again", async function () {
+    await myVotingAdvanced
+      .connect(accounts[0])
+      .addCandidate(0, accounts[3].address);
+    const is_candidate3 = await myVotingAdvanced.checkCandidate(
+      0,
+      accounts[3].address
+    );
+    expect(is_candidate3).to.equal(true);
+  });
+  it("Candidate3 not deleted - only owner can delete him", async function () {
+    await expect(
+      myVotingAdvanced
+        .connect(accounts[1])
+        .deleteCandidate(0, accounts[3].address)
+    ).to.be.revertedWith("Error! You're not the smart contract owner!");
+  });
+  it("Owner changed voting period", async function () {
+    await myVotingAdvanced.connect(accounts[0]).editVotingPeriod(0, 190);
+    const votingInfo = await myVotingAdvanced.getVotingInfo(0);
+    //console.log(votingInfo);
+    expect(votingInfo[2]).to.equal(190);
+  });
+  it("Nobody can't vote before start", async function () {
+    const amount = new ethers.BigNumber.from(10).pow(18).mul(1);
+    await expect(
+      myVotingAdvanced
+        .connect(accounts[1])
+        .vote(0, accounts[3].address, { value: amount })
+    ).to.be.revertedWith("Voting not started yet");
+  });
+  it("Voting started", async function () {
+    await myVotingAdvanced.connect(accounts[0]).startVoting(0);
+    const votingInfo = await myVotingAdvanced.getVotingInfo(0);
+    //console.log(votingInfo);
+    expect(votingInfo[0]).to.equal(true);
+  });
+  it("Candidate3 can not be deleted after voting start", async function () {
+    await expect(
+      myVotingAdvanced
+        .connect(accounts[0])
+        .deleteCandidate(0, accounts[3].address)
+    ).to.be.revertedWith("Voting has already begun!");
+  });
+  it("Period can not be changed after voting start", async function () {
+    await expect(
+      myVotingAdvanced.connect(accounts[0]).editVotingPeriod(0, 190)
+    ).to.be.revertedWith("Voting has already begun!");
+  });
+  it("Voting for candidate that not exist in this voting", async function () {
+    const amount = new ethers.BigNumber.from(10).pow(18).mul(1);
+    await expect(
+      myVotingAdvanced
+        .connect(accounts[1])
+        .vote(0, accounts[11].address, { value: amount })
+    ).to.be.revertedWith("Candidate does not exist on this voting");
+  });
+  it("Account 1 voted for Account 3", async function () {
+    const amount = new ethers.BigNumber.from(10).pow(18).mul(1);
+    await myVotingAdvanced
+      .connect(accounts[1])
+      .vote(0, accounts[3].address, { value: amount });
+    const votingInfo = await myVotingAdvanced.getVotingInfo(0);
+    //console.log(votingInfo);
+    expect(votingInfo[5]).to.equal(accounts[3].address);
+  });
+  it("Account 2 and 4 voted for Account 5", async function () {
+    const amount = new ethers.BigNumber.from(10).pow(18).mul(1);
+    await myVotingAdvanced
+      .connect(accounts[2])
+      .vote(0, accounts[5].address, { value: amount });
+    await myVotingAdvanced
+      .connect(accounts[2])
+      .vote(0, accounts[5].address, { value: amount });
+    const votingInfo = await myVotingAdvanced.getVotingInfo(0);
+    //console.log(votingInfo);
+    expect(votingInfo[5]).to.equal(accounts[5].address);
+  });
+  it("Account 5 try to withdraw", async function () {
+    await expect(
+      myVotingAdvanced.connect(accounts[5]).withdraw(0)
+    ).to.be.revertedWith("Voting is not over yet!");
+  });
+  it("Account 4 try to withdraw after time", async function () {
+    await network.provider.send("evm_increaseTime", [200]);
+    await network.provider.send("evm_mine");
+    await expect(
+      myVotingAdvanced.connect(accounts[4]).withdraw(0)
+    ).to.be.revertedWith("You are not a winner!");
+  });
+  it("Nobody can't vote after finish", async function () {
+    const amount = new ethers.BigNumber.from(10).pow(18).mul(1);
+    await expect(
+      myVotingAdvanced
+        .connect(accounts[1])
+        .vote(0, accounts[3].address, { value: amount })
+    ).to.be.revertedWith("Voting is ended");
+  });
+  it("Account 5 got withdraw", async function () {
+    const balanceH2Before = await provider.getBalance(accounts[5].address);
+    await myVotingAdvanced.connect(accounts[5]).withdraw(0);
+    const balanceH2After = await provider.getBalance(accounts[5].address);
+    //console.log(balanceH2After);
+    const balanceDif = balanceH2After - balanceH2Before;
+    expect(balanceDif).greaterThan(0);
+  });
+  it("Account 5 can't withdraw 2nd time", async function () {
+    await expect(
+      myVotingAdvanced.connect(accounts[5]).withdraw(0)
+    ).to.be.revertedWith("You have already received your prize!");
+  });
+});

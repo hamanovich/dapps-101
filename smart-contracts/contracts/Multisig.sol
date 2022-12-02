@@ -23,6 +23,15 @@ contract MultiSig {
     mapping(uint256 => Transfer) private transfers;
     mapping(address => mapping(uint256 => bool)) approvals;
 
+    modifier onlyApprover() {
+        bool allowed = false;
+        for (uint256 i; i < approvers.length; i++) {
+            if (approvers[i] == msg.sender) allowed = true;
+        }
+        if (!allowed) revert MultiSig__OnlyApprover();
+        _;
+    }
+
     constructor(address[] memory _approvers, uint256 _quorum) payable {
         approvers = _approvers;
         quorum = _quorum;
@@ -70,14 +79,5 @@ contract MultiSig {
 
     function getQuorom() external view returns (uint256) {
         return quorum;
-    }
-
-    modifier onlyApprover() {
-        bool allowed = false;
-        for (uint256 i; i < approvers.length; i++) {
-            if (approvers[i] == msg.sender) allowed = true;
-        }
-        if (!allowed) revert MultiSig__OnlyApprover();
-        _;
     }
 }

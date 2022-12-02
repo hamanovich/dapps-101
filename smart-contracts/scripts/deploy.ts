@@ -27,12 +27,18 @@ async function main() {
   );
   const rockPaperScissors = await RockPaperScissors.deploy();
 
+  const VotingAdvanced = await ethers.getContractFactory(
+    "VotingAdvanced"
+  );
+  const votingAdvanced = await VotingAdvanced.deploy(10);
+
   console.log(`SimpleStorage deployed to ${simpleStorage.address}`);
   console.log(`AdvancedStorage deployed to ${advancedStorage.address}`);
   console.log(`CRUD deployed to ${crud.address}`);
   console.log(`EtherWallet deployed to ${etherWallet.address}`);
   console.log(`Escrow deployed to ${escrow.address}`);
   console.log(`RockPaperScissors deployed to ${rockPaperScissors.address}`);
+  console.log(`VotingAdvanced deployed to ${votingAdvanced.address}`);
 }
 
 main().catch((error) => {
